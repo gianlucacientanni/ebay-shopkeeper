@@ -1,10 +1,13 @@
 # standard library
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 
 # third party
 from pydantic import BaseModel, Field
+
+# ebay_shopkeeper imports
+from back_end.common.config import MAX_CANDIDATES
 
 
 CardType = Literal[
@@ -69,7 +72,12 @@ class SearchRequest(BaseModel):
         default=None, description="Role the card should fill in the deck, e.g. 'ramp'."
     )
     max_price: Optional[Decimal] = Field(default=None, description="Maximum price in GBP.")
-    limit: int = Field(default=10, ge=1, le=20, description="Maximum candidates to return.")
+    limit: int = Field(
+        default=MAX_CANDIDATES,
+        ge=1,
+        le=MAX_CANDIDATES,
+        description="Maximum candidates to return.",
+    )
 
 
 class Candidate(BaseModel):
@@ -98,3 +106,13 @@ class SearchResult(BaseModel):
     # True if the role filter was dropped to find any results
     relaxed: bool = False
     candidates: list[Candidate]
+
+
+class SearchResponse(BaseModel):
+    """
+    What /api/search returns to the frontend: the full result for the listings panel, and
+    the compact output the frontend sends back to the PAL as the tool result.
+    """
+
+    result: SearchResult
+    pal_output: dict[str, Any]

@@ -47,10 +47,32 @@ def scryfall_get(
     """
     GET a Scryfall URL, then wait REQUEST_DELAY_SECONDS to respect Scryfall's rate limit.
     The response is returned as-is so callers can handle Scryfall's status codes themselves.
+
+    :raises ScryfallError: if the request fails to complete (timeout, connection error)
     """
-    response = session.get(url, params=params, timeout=TIMEOUT_SECONDS)
-    time.sleep(REQUEST_DELAY_SECONDS)
+    try:
+        response = session.get(url, params=params, timeout=TIMEOUT_SECONDS)
+    except requests.RequestException as exc:
+        raise ScryfallError(f"Scryfall request failed: {exc.__class__.__name__}") from exc
+    finally:
+        time.sleep(REQUEST_DELAY_SECONDS)
     return response
+
+
+def raise_for_scryfall_error(response: requests.Response) -> None:
+    """
+    Raise a ScryfallError for any non-2xx response, using Scryfall's error details when the
+    body has them (Scryfall errors are JSON objects with a "details" field).
+
+    :raises ScryfallError: if the response isn't a 2xx
+    """
+    if response.ok:
+        return
+    try:
+        details = response.json().get("details") or response.text
+    except ValueError:
+        details = response.text
+    raise ScryfallError(f"Scryfall returned {response.status_code}: {details}")
 
 
 def to_scryfall_card(card: dict[str, Any]) -> ScryfallCard:
@@ -89,11 +111,12 @@ def get_commander(session: requests.Session, name: str) -> Commander:
     Look up a commander by (fuzzy) name to get its colour identity and rules text.
 
     :raises CommanderNotFound: if no card matches the name
+    :raises ScryfallError: if Scryfall fails (5xx, rate limited, timeout, connection error)
     """
     response = scryfall_get(session, f"{SCRYFALL_BASE_URL}/cards/named", {"fuzzy": name})
     if response.status_code == 404:
         raise CommanderNotFound(f"No card found on Scryfall matching {name!r}")
-    response.raise_for_status()
+    raise_for_scryfall_error(response)
     return to_commander(response.json())
 
 
@@ -107,7 +130,8 @@ def search_cards(
 
     :param query: Scryfall search syntax, e.g. "s:hob id<=g t:creature"
     :param order: Scryfall sort order, "edhrec" sorts by popularity in Commander decks
-    :raises ScryfallError: if Scryfall rejects the query as invalid
+    :raises ScryfallError: if Scryfall rejects the query (400) or fails (5xx, rate limited,
+    timeout, connection error)
     """
     url: Optional[str] = f"{SCRYFALL_BASE_URL}/cards/search"
     params: Optional[dict[str, str]] = {"q": query, "order": order, "unique": "cards"}
@@ -116,10 +140,7 @@ def search_cards(
         # Scryfall returns a 404 when no cards match the query
         if response.status_code == 404:
             return
-        if response.status_code == 400:
-            details = response.json().get("details", response.text)
-            raise ScryfallError(f"Invalid Scryfall query {query!r}: {details}")
-        response.raise_for_status()
+        raise_for_scryfall_error(response)
         payload = response.json()
         for card in payload.get("data") or []:
             yield to_scryfall_card(card)

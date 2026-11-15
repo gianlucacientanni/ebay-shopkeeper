@@ -8,10 +8,12 @@ Examples:
 
     uv run card-search --commander "Radagast the Brown" --card-type creature --role ramp
     uv run card-search --commander "Radagast the Brown" --role ramp --json
+    uv run card-search --commander "Radagast the Brown" --role ramp --pal-output
 """
 
 # standard library
 import argparse
+import json
 import logging
 import sys
 from decimal import Decimal
@@ -19,7 +21,9 @@ from typing import Optional, get_args
 
 # ebay_shopkeeper imports
 from back_end.api.scryfall.scryfall import CommanderNotFound, ScryfallError
+from back_end.common.config import MAX_CANDIDATES
 from back_end.common.models import CardType, Candidate, SearchRequest, SearchResult
+from back_end.pal.tool_output import TOOL_RESULT_LIMIT_BYTES, pal_tool_output, tool_result_size
 from back_end.search.pipeline import card_search
 from back_end.search.query import ROLE_FILTERS
 
@@ -39,8 +43,20 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser.add_argument("--card-type", choices=get_args(CardType))
     parser.add_argument("--role", help="Deck role, e.g. ramp, removal, card_draw.")
     parser.add_argument("--max-price", type=Decimal, help="Maximum price in GBP.")
-    parser.add_argument("--limit", type=int, default=10, help="Maximum candidates to return.")
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=MAX_CANDIDATES,
+        choices=range(1, MAX_CANDIDATES + 1),
+        metavar=f"1-{MAX_CANDIDATES}",
+        help="Maximum candidates to return.",
+    )
     parser.add_argument("--json", action="store_true", help="Print the raw JSON result.")
+    parser.add_argument(
+        "--pal-output",
+        action="store_true",
+        help="Print the compact tool result the PAL receives, with its size in bytes.",
+    )
     parser.add_argument("--list-roles", action="store_true", help="List roles and exit.")
     parser.add_argument("--log-level", default="WARNING")
     args = parser.parse_args(argv)
@@ -87,6 +103,20 @@ def format_result(result: SearchResult) -> str:
     return "\n".join(lines)
 
 
+def format_pal_output(result: SearchResult) -> str:
+    """
+    Format the compact PAL tool result as JSON, followed by its app-message size against
+    the 4 KB limit.
+    """
+    output = pal_tool_output(result)
+    size = tool_result_size(output)
+    status = "OK" if size <= TOOL_RESULT_LIMIT_BYTES else "TOO LARGE"
+    return (
+        json.dumps(output, indent=2, ensure_ascii=False)
+        + f"\n\ntool_result size: {size} / {TOOL_RESULT_LIMIT_BYTES} bytes ({status})"
+    )
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     """
     CLI entry point (installed as `card-search`).
@@ -119,7 +149,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    print(result.model_dump_json(indent=2) if args.json else format_result(result))
+    if args.pal_output:
+        print(format_pal_output(result))
+    elif args.json:
+        print(result.model_dump_json(indent=2))
+    else:
+        print(format_result(result))
     return 0
 
 

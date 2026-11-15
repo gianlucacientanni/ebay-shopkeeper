@@ -4,16 +4,22 @@ version = "0.1.0"
 description = "Backend for the Arcanum Collectibles Tavus shopkeeper: card search, PAL and conversations."
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi>=0.163.1",
     "pydantic>=2.9",
     "python-dotenv>=1.0",
     "requests>=2.32",
+    "uvicorn[standard]>=0.54.0",
 ]
 
 [project.scripts]
 card-search = "back_end.search.cli:main"
+shopkeeper-api = "back_end.server.app:main"
 
 [dependency-groups]
-dev = ["pytest>=8.3"]
+dev = [
+    "httpx2>=2.16.0",
+    "pytest>=8.3",
+]
 
 [build-system]
 requires = ["hatchling"]
