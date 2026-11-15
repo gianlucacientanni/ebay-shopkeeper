@@ -28,6 +28,14 @@ The primary flow should be:
 
 Checking stock before ranking means we never rank cards we can't sell, and the ranking prompt stays small.
 
+# Git Commit message layout
+Git commits should follow this standard:
+1) The issue at hand (for example: the ebay integration currently fetches all inventory items which causes latency in the current flow)
+2) How this PR fixes it (to reduce latency, we now batch results and iteratively fill out the inventory page)
+3) What parts of the repo have changed, highlighting the most important files to look at
+
+Git commit messages need to be brief and follow a bullet pointed structure for quick reading
+
 # Architecture
 
 React frontend + Python backend. API keys (Tavus, LLM) live **only** in the backend; nothing secret is ever put in a `VITE_*` variable, since those are bundled into browser code.
