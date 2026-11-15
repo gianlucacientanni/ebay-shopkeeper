@@ -7,6 +7,8 @@
 # Secrets: API keys live only in back_end/.env
 **/.env
 **/.env.local
+# Tavus resource ids created by setup-pal (account-specific)
+**/.tavus_resources.json
 
 # Frontend
 **/node_modules/
