@@ -32,8 +32,8 @@ Checking stock before ranking means we never rank cards we can't sell, and the r
 
 React frontend + Python backend. API keys (Tavus, LLM) live **only** in the backend; nothing secret is ever put in a `VITE_*` variable, since those are bundled into browser code.
 
-- `frontend/`: React + Vite + TypeScript, Tavus CVI components (`<CVIProvider>`, `<Conversation>`), plus a panel that displays the recommended listings. It asks the backend to create a conversation and never calls `tavusapi.com` directly.
-- `backend/`: Python (uv, FastAPI), styled after the tavus-examples repo. Responsibilities:
+- `front_end/`: React + Vite + TypeScript, Tavus CVI components (`<CVIProvider>`, `<Conversation>`), plus a panel that displays the recommended listings. It asks the backend to create a conversation and never calls `tavusapi.com` directly.
+- `back_end/`: Python (uv, FastAPI), styled after the tavus-examples repo. Responsibilities:
   - creating the PAL and conversations via the Tavus API,
   - the card-search tool: Scryfall query → stock check → LLM ranking → listings,
   - reading the local SQLite copy of the eBay listings.
@@ -41,10 +41,10 @@ React frontend + Python backend. API keys (Tavus, LLM) live **only** in the back
 The whole card-search pipeline must be runnable from the command line without a Tavus avatar, so it can be built and tested without spending the 100 minutes. Only start avatar conversations once the tool works end to end, and give test conversations a short maximum duration.
 
 # Prompt checklist
-This prompt is suggested by Tavus. It applies to the `frontend/` app only, with these overrides from the Architecture section above:
-- the app lives in `frontend/` rather than `my-tavus-app/`;
+This prompt is suggested by Tavus. It applies to the `front_end/` app only, with these overrides from the Architecture section above:
+- the app lives in `front_end/` rather than `my-tavus-app/`;
 - step 4: the frontend `POST`s to our backend (which calls `https://tavusapi.com/v2/conversations` with the key) and uses the `conversation_url` it returns;
-- step 6: there is no `VITE_TAVUS_API_KEY`. The Tavus key goes in `backend/.env`. `frontend/.env` holds only non-secret values such as the backend URL.
+- step 6: there is no `VITE_TAVUS_API_KEY`. The Tavus key goes in `back_end/.env`. `front_end/.env` holds only non-secret values such as the backend URL.
 
 ## ✅ **System Prompt for AI: React (Vite) + Tavus CVI Integration**
 
