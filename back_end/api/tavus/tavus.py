@@ -235,6 +235,30 @@ def patch_pal(session: requests.Session, pal_id: str, patch: JsonPatch) -> None:
     tavus_request(session, "PATCH", f"/pals/{pal_id}", f"update PAL {pal_id}", patch)
 
 
+def get_conversation(
+    session: requests.Session, conversation_id: str, verbose: bool = True
+) -> dict[str, Any]:
+    """
+    Fetch a conversation. With verbose=True the response includes "events", such as
+    system.shutdown and the end-of-call application.transcription_ready transcript.
+    """
+    query = "?verbose=true" if verbose else ""
+    return tavus_request(
+        session,
+        "GET",
+        f"/conversations/{conversation_id}{query}",
+        f"get conversation {conversation_id}",
+    )
+
+
+def list_pal_tools(session: requests.Session, pal_id: str) -> list[dict[str, Any]]:
+    """
+    List the tools attached to a PAL (registry tools, including system tools like end_call).
+    """
+    body = tavus_request(session, "GET", f"/pals/{pal_id}/tools", f"list tools of PAL {pal_id}")
+    return list(body.get("data") or [])
+
+
 def get_pal(session: requests.Session, pal_id: str) -> dict[str, Any]:
     """
     Fetch a PAL by id.

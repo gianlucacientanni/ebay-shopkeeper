@@ -15,6 +15,8 @@ dependencies = [
 card-search = "back_end.search.cli:main"
 shopkeeper-api = "back_end.server.app:main"
 setup-pal = "back_end.pal.setup:main"
+preflight = "back_end.pal.preflight:main"
+review-call = "back_end.pal.review_call:main"
 
 [dependency-groups]
 dev = [
