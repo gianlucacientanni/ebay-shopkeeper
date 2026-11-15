@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tavus-docs": {
+      "type": "http",
+      "url": "https://docs.tavus.io/mcp"
+    }
+  }
+}
