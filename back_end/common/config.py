@@ -60,9 +60,9 @@ def saved_pal_id(path: Path = TAVUS_RESOURCES_PATH) -> str:
 # An explicit TAVUS_PAL_ID wins; otherwise use the PAL created by the setup script.
 TAVUS_PAL_ID = os.environ.get("TAVUS_PAL_ID") or saved_pal_id()
 TAVUS_FACE_ID = os.environ.get("TAVUS_FACE_ID", "")
-# CLAUDE.md: conversations use test_mode (the PAL doesn't join, no minutes used) until
-# that rule is removed.
-TAVUS_TEST_MODE = env_bool("TAVUS_TEST_MODE", True)
+# Real calls by default. Set TAVUS_TEST_MODE=true to create conversations the PAL doesn't
+# join (no minutes used), e.g. to test the start/leave plumbing for free.
+TAVUS_TEST_MODE = env_bool("TAVUS_TEST_MODE", False)
 MAX_CALL_DURATION = int(os.environ.get("MAX_CALL_DURATION", "180"))
 
 # Origin of the React dev server, allowed by CORS.
