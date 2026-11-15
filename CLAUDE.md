@@ -60,6 +60,7 @@ React frontend + Python backend. API keys (Tavus) live **only** in the backend; 
 - `back_end/`: Python (uv, FastAPI), styled after the tavus-examples repo. Responsibilities:
   - creating the PAL and conversations via the Tavus API,
   - the card-search tool: Scryfall query → stock check → in-stock candidates with listings (the PAL ranks them),
+  - `POST /api/search` returns the full result (URLs, images) for the frontend's listings panel plus a compact `pal_output` (name, price, type, ~120 chars of rules text, no URLs, at most 10 cards). The frontend sends only `pal_output` back as the `conversation.tool_result`, because Tavus app messages are capped at 4 KB,
   - reading the local SQLite copy of the eBay listings.
 
 The whole card-search pipeline must be runnable from the command line without a Tavus avatar, so it can be built and tested without spending the 100 minutes. Only start avatar conversations once the tool works end to end, and give test conversations a short maximum duration.
