@@ -1,4 +1,5 @@
 # standard library
+import json
 import os
 from pathlib import Path
 
@@ -43,7 +44,21 @@ MAX_CANDIDATES = 10
 
 # Tavus. The API key is only ever read here and sent to tavusapi.com from the backend.
 TAVUS_API_KEY = os.environ.get("TAVUS_API_KEY", "")
-TAVUS_PAL_ID = os.environ.get("TAVUS_PAL_ID", "")
+# Ids of the tool, objectives and PAL created by `uv run setup-pal` (gitignored).
+TAVUS_RESOURCES_PATH = BACK_END_DIR / ".tavus_resources.json"
+
+
+def saved_pal_id(path: Path = TAVUS_RESOURCES_PATH) -> str:
+    """
+    The pal_id saved by the setup script, or "" if setup hasn't been run.
+    """
+    if not path.exists():
+        return ""
+    return str(json.loads(path.read_text()).get("pal_id", ""))
+
+
+# An explicit TAVUS_PAL_ID wins; otherwise use the PAL created by the setup script.
+TAVUS_PAL_ID = os.environ.get("TAVUS_PAL_ID") or saved_pal_id()
 TAVUS_FACE_ID = os.environ.get("TAVUS_FACE_ID", "")
 # CLAUDE.md: conversations use test_mode (the PAL doesn't join, no minutes used) until
 # that rule is removed.
