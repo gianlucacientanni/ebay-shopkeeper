@@ -20,6 +20,7 @@ function App() {
   const [conversation, setConversation] = useState<ConversationInfo | null>(null);
   const [starting, setStarting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [lastConversationId, setLastConversationId] = useState<string | null>(null);
   const [listings, setListings] = useState<ListingsState>({ status: "idle" });
   const [tomsPick, setTomsPick] = useState<string | null>(null);
 
@@ -41,6 +42,7 @@ function App() {
     if (conversation) {
       // Best effort: the backend's leave timeout also ends abandoned calls.
       void endConversation(conversation.conversation_id).catch(() => undefined);
+      setLastConversationId(conversation.conversation_id);
     }
     setConversation(null);
     setNotice("The call has ended. Thanks for visiting!");
@@ -80,7 +82,12 @@ function App() {
               onPalSpeech={onPalSpeech}
             />
           ) : (
-            <StartScreen onStart={startCall} starting={starting} notice={notice} />
+            <StartScreen
+              onStart={startCall}
+              starting={starting}
+              notice={notice}
+              lastConversationId={lastConversationId}
+            />
           )}
           {import.meta.env.DEV && (
             <DevToolCallSimulator

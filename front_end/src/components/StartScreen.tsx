@@ -5,9 +5,11 @@ interface StartScreenProps {
   starting: boolean;
   /** Why the last attempt failed or the call ended, if it did. */
   notice: string | null;
+  /** Id of the last call, so it can be reviewed with `uv run review-call <id>`. */
+  lastConversationId?: string | null;
 }
 
-export function StartScreen({ onStart, starting, notice }: StartScreenProps) {
+export function StartScreen({ onStart, starting, notice, lastConversationId }: StartScreenProps) {
   return (
     <section className="start">
       <h1 className="start__title">Arcanum Collectibles</h1>
@@ -21,6 +23,12 @@ export function StartScreen({ onStart, starting, notice }: StartScreenProps) {
       {notice && (
         <p className="start__notice" role="status">
           {notice}
+        </p>
+      )}
+      {lastConversationId && (
+        <p className="start__review">
+          Last call: <code>{lastConversationId}</code>. Review it with{" "}
+          <code>uv run review-call {lastConversationId}</code>
         </p>
       )}
     </section>

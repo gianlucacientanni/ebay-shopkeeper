@@ -35,6 +35,7 @@ export function useSearchToolHandler(handlers: SearchToolHandlers): void {
 
   const send = useCallback(
     (message: ToolResultMessage) => {
+      console.info("[shopkeeper] tool_result sent to Tom", message);
       sendAppMessage(message, "*");
     },
     [sendAppMessage],
@@ -50,6 +51,9 @@ export function useSearchToolHandler(handlers: SearchToolHandlers): void {
             onPalSpeech(event.properties.speech);
           }
           return;
+        }
+        if (event.event_type === "conversation.tool_call") {
+          console.info("[shopkeeper] tool_call from Tom", event);
         }
         void handleSearchToolCall(event as IncomingAppMessage, {
           search: searchCards,
