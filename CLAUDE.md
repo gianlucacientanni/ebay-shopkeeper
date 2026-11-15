@@ -1,6 +1,6 @@
 This repo is part of a coding challenge for https://www.tavus.io/. Their ask is simple: use Tavus and demonstrate what you can do with it.
 
-My idea is to make a shop-keeper for my Magic The Gathering eBay store: https://www.ebay.co.uk/str/arcanumcollectibles. What this shop keeper will do is be able to talk you through what card you might want to buy. It will give you prompts such as "Who is your commander", "What card type are you looking for: creature, instant, sorcery or something else?". It will then look through my inventory to find close matching results.
+My idea is to make a shop-keeper for my Magic The Gathering eBay store: https://www.ebay.co.uk/str/arcanumcollectibles. What this shop keeper will do is be able to talk you through what card you might want to buy. It will give you prompts such as "Who is your commander", "What card type are you looking for: creature, instant, sorcery or something else?". It will then look through my inventory to find close matching results. The shopkeeper is an expert in Magic The Gathering - the primary use-case is a customer walking into a shop with an issue they currently have with their deck, but they don't know how to fix that problem. It's up to the shop keeper and his knowledge of the game to accurately resolve this issue.
 
 My eBay store is driven mainly by API calls rather than through the UI, you can find the repo here: ~/arcanum.
 
@@ -12,6 +12,15 @@ Tavus give a bunch of examples using Python, I want these to drive the coding st
 
 I have a limited 100 minutes of using a Tavus avatar, I will add the credentials to use this later once I have generated a sufficient amount of code.
 
+It looks like 'Obejctives' will be a good feature fit for the eBay shopkeeper.
+
+Ensure test_mode: true is set for conversations until I remove this line from the CLAUDE.md.
+
+For documentation, ensure you're using the Tavus docs MCP, always check that the MCP server is running before querying the documentation.
+
+# Code style
+I've added some files from another project under ~/ebay_shopkeeper/code_examples/..., please follow the design and structure of these files. I prefer functional programming style, well documented functions with clear docstrings and type hints etc. The unit test represents how I'd like unit tests to be written. Please follow the paradigms used in these two test files when writing new code. There's some imports that can't be referenced because they point to another repo and importing all the dependencies would be tricky, please ignore this.
+
 # Arcanum / eBay Store
 
 The source of truth for cards is my eBay store, the databases in arcanum are temporary and change often. You will need to query the eBay listings to be able to check whether a card exists there.
@@ -20,13 +29,13 @@ I don't actually want to integrate this with my store, so I'm going to make a co
 
 The primary flow should be:
 1) the PAL gathers the user's description of the card they want (commander, card type, role in the deck, etc.) and calls a backend tool with those details as structured arguments,
-2) convert that into a generic Scryfall query with an additional filter on the following sets (I primarily have cards from the following sets): Lorwyn Eclipsed, Secrets of Strixhaven, The Hobbit and Reality Fracture, presume in your searching that cards can only be from those sets and nothing else. Use the commander's colour identity as an `id<=` filter,
-3) fetch a wide set of Scryfall results (e.g. up to 100, not just the top 10), so that enough of them survive the stock check,
-4) check which of those cards are in stock and discard the rest,
-5) make another LLM prompt to make a decision: based on the commander, order the in-stock cards in terms of priority and keep the top few (e.g. 5), each with a one-line reason,
-6) return the eBay listing for each (title, price, URL, image) to the PAL to talk through, and show them in the frontend.
+2) convert that into a Scryfall query across the whole of Scryfall, filtered to the commander's colour identity (an `id<=` filter) and to these sets only: Lorwyn Eclipsed (ECL), Secrets of Strixhaven (SOS), The Hobbit (HOB), Reality Fracture (FRA) and Avatar: The Last Airbender (TLA),
+3) take the Scryfall results in EDHREC order, 10 at a time,
+4) check which of each 10 are in stock in the local database and discard the rest, moving on to the next 10 until at least 5 are in stock (checking at most 50 cards),
+5) return the in-stock cards (up to ~10, in EDHREC order) to the PAL as the tool result, each with its eBay listing (title, price, URL, image) plus the card's type line, mana cost and rules text,
+6) the PAL's own LLM does the ranking: using the commander and the customer's problem, it picks the best few (e.g. 3-5) and explains in conversation why each one helps. The listings are shown in the frontend, and the URL needs to be produced as a final artifact.
 
-Checking stock before ranking means we never rank cards we can't sell, and the ranking prompt stays small.
+Checking stock before ranking means the PAL never recommends cards we can't sell, and the tool result stays small. There is no separate backend LLM call in the main flow: ranking happens in the PAL's LLM, which costs nothing beyond Tavus and already knows what the customer said.
 
 # Git Commit message layout
 Git commits should follow this standard:
@@ -36,14 +45,21 @@ Git commits should follow this standard:
 
 Git commit messages need to be brief and follow a bullet pointed structure for quick reading
 
+# Build objectives
+1. The card-search pipeline as a CLI.
+2. A FastAPI endpoint for the search, plus a conversation endpoint (with max_call_duration).
+3. A setup script that creates the tool, objectives and PAL. This is API-only and costs no minutes.
+4. The frontend: CVI components, the tool-call handler and the listings panel. Test the plumbing with test_mode: true.
+5. A real 2–3 minute call.
+
 # Architecture
 
-React frontend + Python backend. API keys (Tavus, LLM) live **only** in the backend; nothing secret is ever put in a `VITE_*` variable, since those are bundled into browser code.
+React frontend + Python backend. API keys (Tavus) live **only** in the backend; nothing secret is ever put in a `VITE_*` variable, since those are bundled into browser code.
 
 - `front_end/`: React + Vite + TypeScript, Tavus CVI components (`<CVIProvider>`, `<Conversation>`), plus a panel that displays the recommended listings. It asks the backend to create a conversation and never calls `tavusapi.com` directly.
 - `back_end/`: Python (uv, FastAPI), styled after the tavus-examples repo. Responsibilities:
   - creating the PAL and conversations via the Tavus API,
-  - the card-search tool: Scryfall query → stock check → LLM ranking → listings,
+  - the card-search tool: Scryfall query → stock check → in-stock candidates with listings (the PAL ranks them),
   - reading the local SQLite copy of the eBay listings.
 
 The whole card-search pipeline must be runnable from the command line without a Tavus avatar, so it can be built and tested without spending the 100 minutes. Only start avatar conversations once the tool works end to end, and give test conversations a short maximum duration.

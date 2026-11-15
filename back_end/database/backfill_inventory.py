@@ -20,20 +20,32 @@ Flow:
 
 from __future__ import annotations
 
+# standard library
 import argparse
 import csv
 import logging
-import re
 import sqlite3
 import sys
 import time
 import uuid
 from collections import Counter
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Iterator, Mapping
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
+
+if __package__ in (None, ""):
+    # Run as a plain script from the arcanum repo: make `back_end` importable.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+# ebay_shopkeeper imports
+from back_end.common.cards import (  # noqa: E402
+    format_colour_identity,
+    front_face_name,
+    image_url_for,
+    normalize_name,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -58,8 +70,6 @@ MATCH_PHASH = "card_phash"
 MATCH_FUZZY = "scryfall_fuzzy"
 
 SKU_NAMESPACE = uuid.UUID("6f1c1d8e-3b0e-4c8e-9a51-2b7f0d0c5e11")
-WUBRG_ORDER = "WUBRG"
-_NON_ALNUM_RE = re.compile(r"[^A-Z0-9]+")
 
 
 # --------------------------------------------------------------------------- models
@@ -120,47 +130,15 @@ def parse_sku(sku: str) -> ParsedSku | None:
     )
 
 
-def normalize_name(name: str) -> str:
-    """Normalise a card name so SKU tokens and real names compare equal.
-
-    SKUs drop punctuation ("Gandalf, the Grey" -> "GANDALF_THE_GREY"), so compare on
-    upper-case alphanumerics only, using the front face of double-faced cards.
-    """
-    front = name.split("//")[0]
-    return _NON_ALNUM_RE.sub("", front.upper())
-
-
 def name_from_title(title: str) -> str:
     """Arcanum titles look like "Card Name - foil - Set Name - MTG"."""
     return title.split(" - ")[0].strip()
-
-
-def format_colour_identity(colours: Iterable[str]) -> str:
-    letters = {c.upper() for c in colours}
-    ordered = "".join(c for c in WUBRG_ORDER if c in letters)
-    return ordered or "C"
 
 
 def clean_scryfall_url(url: str | None) -> str | None:
     if not url:
         return None
     return url.split("?", 1)[0]
-
-
-def front_face_name(name: str) -> str:
-    return name.split(" // ")[0].strip()
-
-
-def image_url_for(card: Mapping[str, Any]) -> str | None:
-    image_uris = card.get("image_uris")
-    if isinstance(image_uris, Mapping) and image_uris.get("normal"):
-        return str(image_uris["normal"])
-    faces = card.get("card_faces")
-    if isinstance(faces, list) and faces and isinstance(faces[0], Mapping):
-        face_uris = faces[0].get("image_uris")
-        if isinstance(face_uris, Mapping) and face_uris.get("normal"):
-            return str(face_uris["normal"])
-    return None
 
 
 def _to_int(value: Any) -> int | None:
