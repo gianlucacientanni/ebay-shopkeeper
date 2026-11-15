@@ -14,8 +14,6 @@ I have a limited 100 minutes of using a Tavus avatar, I will add the credentials
 
 It looks like 'Obejctives' will be a good feature fit for the eBay shopkeeper.
 
-Ensure test_mode: true is set for conversations until I remove this line from the CLAUDE.md.
-
 For documentation, ensure you're using the Tavus docs MCP, always check that the MCP server is running before querying the documentation.
 
 # Code style

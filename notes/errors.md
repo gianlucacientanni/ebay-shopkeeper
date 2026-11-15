@@ -32,3 +32,8 @@ PAL ◀─conversation.tool_result─ frontend ◀── SearchResponse ──�
 
 **Rule for the frontend:** any non-200 response from `/api/search` becomes `conversation.tool_result` with `status: "error"`. Always send a result: if none is sent, the call just drops out of the PAL's context.
 
+The frontend implements this in `front_end/src/lib/toolCall.ts` (`handleSearchToolCall`):
+- bad tool arguments (invalid JSON, no commander) → `status: "error"` without calling the backend,
+- 404 → the backend's message plus "Ask the customer to repeat or spell their commander's name",
+- other errors, or the backend being unreachable → "The stock search failed: <detail>".
+
