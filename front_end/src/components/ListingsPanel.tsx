@@ -19,7 +19,12 @@ export function formatPrice(price: string | null): string {
 function ListingCard({ candidate, isPick }: { candidate: Candidate; isPick: boolean }) {
   return (
     <li className={`listing${isPick ? " listing--pick" : ""}`} aria-current={isPick || undefined}>
-      {isPick && <span className="listing__badge">Tom's pick</span>}
+      {isPick && (
+        <span className="listing__badge">
+          <span aria-hidden="true">✦ </span>
+          <span>Tom's pick</span>
+        </span>
+      )}
       {candidate.image_url ? (
         <img className="listing__image" src={candidate.image_url} alt={candidate.name} loading="lazy" />
       ) : (
@@ -50,7 +55,10 @@ function ListingCard({ candidate, isPick }: { candidate: Candidate; isPick: bool
 export function ListingsPanel({ state, tomsPick }: ListingsPanelProps) {
   return (
     <section className="listings" aria-label="Recommended listings" aria-live="polite">
-      <h2 className="listings__heading">On the shelves</h2>
+      <h2 className="listings__heading">on the shelves</h2>
+      <div className="divider" aria-hidden="true">
+        <span>✦</span>
+      </div>
 
       {state.status === "idle" && (
         <p className="listings__message">

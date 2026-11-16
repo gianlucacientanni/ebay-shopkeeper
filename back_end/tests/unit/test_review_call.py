@@ -101,13 +101,32 @@ class ReviewCallTest(TestCase):
                     {"event_type": "application.transcription_ready", "properties": {"transcript":
                         TRANSCRIPT[:-1] + [{"role": "assistant", "content": "Get a Sol Ring."}]}},
                 ]},
-                "failed_check": "Tom recommended a card from the results",
+                "failed_check": "Tom named a card from the results",
             },
         ]
         for test_case in test_cases:
             test_desc = test_case["description"]
             checks = checks_by_name(review_call.review(test_case["conversation"]))
             self.assertFalse(checks[test_case["failed_check"]][0], f"Test case {test_desc} failed.")
+
+    def test_real_transcript_shape(self):
+        # As recorded on a real call: a placeholder tool turn, the call repeated with an
+        # "_result" id, and Tavus' note appended after the tool's JSON.
+        call = {"function": {"name": "search_cards", "arguments": '{"commander": "Mica"}'},
+                "id": "call_1", "type": "function"}
+        turns = [
+            {"role": "assistant", "content": "Let me look…", "tool_calls": [call]},
+            {"role": "tool", "content": "dispatched, awaiting result. Do not call this tool again"},
+            {"role": "assistant", "content": "", "tool_calls": [{**call, "id": "call_1_result"}]},
+            {"role": "tool", "content": json.dumps(PAL_OUTPUT) + " | NOTE: this is the answer..."},
+            {"role": "assistant", "content": "Springleaf Drum would help."},
+        ]
+        conversation = {"events": [{"event_type": "application.transcription_ready",
+                                    "properties": {"transcript": turns}}]}
+        result = review_call.review(conversation)
+        self.assertEqual(result["search_calls"], [{"commander": "Mica"}])
+        self.assertEqual(result["tool_results"], [PAL_OUTPUT])
+        self.assertEqual(result["recommended"], ["Springleaf Drum"])
 
     def test_tool_results_parse_json_and_keep_errors(self):
         turns = [
@@ -153,7 +172,7 @@ class ReviewCallTest(TestCase):
         result = review_call.review(CONVERSATION)
         markdown = review_call.render_markdown("c123", CONVERSATION, result)
         self.assertIn("# Call review: c123", markdown)
-        self.assertIn("✔ Tom recommended a card from the results: Springleaf Drum", markdown)
+        self.assertIn("✔ Tom named a card from the results: Springleaf Drum", markdown)
         self.assertIn("**user**: Radagast the Brown.", markdown)
         self.assertIn("Shutdown reason: end_call", markdown)
         with tempfile.TemporaryDirectory() as tmp:

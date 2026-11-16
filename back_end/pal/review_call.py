@@ -34,6 +34,8 @@ PAL_JOINED_EVENTS = ("system.pal_joined", "system.replica_joined")
 # Tavus saves the transcript shortly after the call ends; wait up to this long for it.
 TRANSCRIPT_WAIT_ATTEMPTS = 6
 TRANSCRIPT_WAIT_SECONDS = 10
+# Tavus' placeholder tool turn while a tool call is in flight; the real result follows.
+DISPATCHED_PLACEHOLDER = "dispatched, awaiting result"
 
 # A transcript entry: role, content, seconds_from_start, duration, ...
 Turn = dict[str, Any]
@@ -84,13 +86,23 @@ def fetch_with_transcript(
 
 def parse_json(value: Any) -> Any:
     """
-    Parse a JSON string, returning the value unchanged if it isn't JSON.
+    Parse a JSON string, returning the value unchanged if it isn't JSON. Tavus appends a
+    note after the tool's JSON in the transcript ("{...} | NOTE: ..."), so a leading JSON
+    value followed by other text is also accepted.
     """
-    if isinstance(value, str):
+    if not isinstance(value, str):
+        return value
+    text = value.strip()
+    try:
+        return json.loads(text)
+    except ValueError:
+        pass
+    if text[:1] in "{[":
         try:
-            return json.loads(value)
+            parsed, _ = json.JSONDecoder().raw_decode(text)
+            return parsed
         except ValueError:
-            return value
+            pass
     return value
 
 
@@ -100,12 +112,17 @@ def search_calls(turns: list[Turn]) -> list[dict[str, Any]]:
     on assistant turns; the exact transcript shape isn't documented, so this is lenient.
     """
     calls = []
+    seen_ids = set()
     for turn in turns:
         for tool_call in turn.get("tool_calls") or []:
             function = tool_call.get("function") or tool_call
-            if function.get("name") == TOOL_NAME:
-                arguments = parse_json(function.get("arguments"))
-                calls.append(arguments if isinstance(arguments, dict) else {"raw": arguments})
+            # Tavus records the result as a second tool_calls entry with id "<id>_result".
+            call_id = str(tool_call.get("id", "")).removesuffix("_result")
+            if function.get("name") != TOOL_NAME or (call_id and call_id in seen_ids):
+                continue
+            seen_ids.add(call_id)
+            arguments = parse_json(function.get("arguments"))
+            calls.append(arguments if isinstance(arguments, dict) else {"raw": arguments})
     return calls
 
 
@@ -113,7 +130,12 @@ def tool_results(turns: list[Turn]) -> list[Any]:
     """
     Content of each tool turn (role "tool"): the pal_output dict, or an error string.
     """
-    return [parse_json(turn.get("content")) for turn in turns if turn.get("role") == "tool"]
+    return [
+        parse_json(turn.get("content"))
+        for turn in turns
+        if turn.get("role") == "tool"
+        and not str(turn.get("content", "")).startswith(DISPATCHED_PLACEHOLDER)
+    ]
 
 
 def result_card_names(results: list[Any]) -> list[str]:
@@ -185,7 +207,7 @@ def review(conversation: dict[str, Any]) -> dict[str, Any]:
             f"{len(card_names)} cards" if card_names else json.dumps(results)[:200],
         ),
         (
-            "Tom recommended a card from the results",
+            "Tom named a card from the results",
             bool(recommended),
             ", ".join(recommended),
         ),

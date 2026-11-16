@@ -48,8 +48,10 @@ How you find cards:
   Point them there rather than describing where to buy.
 - If the result says relaxed is true, tell the customer nothing matched that exact role, and
   offer the closest alternative.
-- If no cards come back, say honestly that nothing suitable is in stock and offer to look for
-  something different.
+- If none of the results fits the customer's problem, search once more with a related role
+  before giving up, and explain the different angle (for example, removing what stops their
+  combo instead of protecting it). Only if that second search doesn't fit either, say
+  honestly that nothing suitable is in stock. Never search more than twice for one problem.
 - If the tool reports an error, apologise briefly and ask the customer to say their
   commander's name again.
 
@@ -63,12 +65,15 @@ Fracture and Avatar: The Last Airbender. Many of these cards are newer than your
 trust the card details the search tool returns over your own memory."""
 
 # The decision tree: each deck problem leads to one search role, so every conversation ends
-# with a single, clean recommendation. Roles must be keys of search.query.ROLE_FILTERS.
+# with a single, clean recommendation. If that search has nothing that fits, the PAL tries the
+# fallback role once. Roles must be keys of search.query.ROLE_FILTERS.
 PROBLEM_BRANCHES: list[dict[str, str]] = [
     {
         "objective_name": "recommend_ramp",
         "condition": "If the deck is too slow, falls behind early or doesn't have enough mana",
         "role": "ramp",
+        "fallback_role": "mana_rock",
+        "fallback_angle": "an artifact that makes extra mana, which works in any colour",
         "pitch": "a ramp card to speed the deck up",
     },
     {
@@ -78,18 +83,24 @@ PROBLEM_BRANCHES: list[dict[str, str]] = [
             "stopped by opponents"
         ),
         "role": "protection",
+        "fallback_role": "removal",
+        "fallback_angle": "removing whatever stops their win condition instead of protecting it",
         "pitch": "a piece of interaction that protects their win condition",
     },
     {
         "objective_name": "recommend_card_draw",
         "condition": "If the deck runs out of cards or gas in the mid to late game",
         "role": "card_draw",
+        "fallback_role": "card_advantage",
+        "fallback_angle": "a broader card advantage effect that keeps them in gas",
         "pitch": "a card draw spell to keep their hand full",
     },
     {
         "objective_name": "recommend_removal",
         "condition": "If they can't deal with the threats their opponents play",
         "role": "removal",
+        "fallback_role": "board_wipe",
+        "fallback_angle": "a board wipe that answers several threats at once",
         "pitch": "a removal spell to answer opponents' threats",
     },
 ]
@@ -98,9 +109,16 @@ PROBLEM_BRANCHES: list[dict[str, str]] = [
 FALLBACK_OBJECTIVE = "recommend_best_fit"
 
 
-def recommend_objective(name: str, search_instruction: str, pitch: str) -> dict[str, Any]:
+def recommend_objective(
+    name: str, search_instruction: str, pitch: str, fallback_instruction: str
+) -> dict[str, Any]:
     """
     An objective that runs the search and recommends exactly one card, then moves to wrap_up.
+    If nothing in the results fits, it searches once more with the fallback before giving up.
+
+    :param search_instruction: which role (and budget) to search with
+    :param pitch: how to frame the recommendation, e.g. "a ramp card to speed the deck up"
+    :param fallback_instruction: the one follow-up search to try if nothing fits
     """
     return {
         "objective_name": name,
@@ -108,7 +126,10 @@ def recommend_objective(name: str, search_instruction: str, pitch: str) -> dict[
             f"Use the {TOOL_NAME} tool with the customer's commander, {search_instruction}. "
             f"From the results, recommend the single best card as {pitch}: say its name, its "
             "price and in one or two sentences why it fixes their problem with this commander. "
-            "Point them to the listing on screen."
+            "Point them to the listing on screen. If none of the results genuinely fixes their "
+            f"problem, search once more {fallback_instruction}, and recommend the best card from "
+            "that search, explaining the different approach. If that doesn't fit either, say "
+            "honestly that nothing suitable is in stock."
         ),
         "confirmation_mode": "auto",
         "output_variables": ["recommended_card"],
@@ -157,6 +178,7 @@ def build_objectives() -> list[dict[str, Any]]:
                 branch["objective_name"],
                 f'role "{branch["role"]}" and their budget if they gave one',
                 branch["pitch"],
+                f'with role "{branch["fallback_role"]}", {branch["fallback_angle"]}',
             )
             for branch in PROBLEM_BRANCHES
         ],
@@ -165,6 +187,7 @@ def build_objectives() -> list[dict[str, Any]]:
             "the role from the tool's options that best matches their problem, and their budget "
             "if they gave one",
             "the best fix for their problem",
+            "with the next closest role from the tool's options",
         ),
         {
             "objective_name": "wrap_up",
