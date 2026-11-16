@@ -26,7 +26,7 @@ from back_end.search.pipeline import card_search
 
 DEFAULT_BACKEND_URL = "http://localhost:8000"
 MAX_TEST_CALL_SECONDS = 180
-# The search from the call script in notes/real_call.md.
+# The search from the call script in the README ("A real call").
 SCRIPTED_SEARCH = SearchRequest(commander="Radagast the Brown", role="ramp")
 EXPECTED_TOOLS = {shopkeeper.TOOL_NAME, shopkeeper.END_CALL_TOOL_ID}
 
