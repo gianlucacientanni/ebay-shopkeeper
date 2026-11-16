@@ -1,25 +1,98 @@
+/* Masthead: the store banner, full width up to its native size. */
+.masthead {
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px 0;
+}
+
+.masthead__banner {
+  display: block;
+  width: 100%;
+  max-width: 960px;
+  height: auto;
+  /* Fade the banner's edges into the page so its texture doesn't show as a box. */
+  -webkit-mask-image:
+    linear-gradient(to right, transparent, #000 14%, #000 86%, transparent),
+    linear-gradient(to bottom, transparent, #000 10%, #000 90%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent, #000 14%, #000 86%, transparent),
+    linear-gradient(to bottom, transparent, #000 10%, #000 90%, transparent);
+  mask-composite: intersect;
+}
+
 /* Layout: the call (or start screen) on the left, listings on the right; stacked on narrow
    screens. */
 .shop {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr);
-  gap: 24px;
-  min-height: 100vh;
-  padding: 24px;
+  grid-template-columns: minmax(0, 3fr) minmax(300px, 2fr);
+  gap: 32px;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 16px 32px 32px;
 }
 
 @media (max-width: 900px) {
   .shop {
     grid-template-columns: 1fr;
-    padding: 16px;
+    gap: 24px;
+    padding: 12px 16px 24px;
+  }
+
+  .start {
+    min-height: 0;
+    padding: 32px 20px;
   }
 }
 
 .shop__stage {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
   min-width: 0;
+}
+
+/* Shared: a hairline rule broken by a star, echoing the banner's lines and sparkles. */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  max-width: 420px;
+  color: var(--cream);
+  font-size: 0.8rem;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--hairline-strong);
+}
+
+/* Shared: cream outlined button that fills on hover. */
+.button {
+  padding: 0.7rem 2.4rem;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--cream);
+  background: transparent;
+  border: 1px solid var(--cream);
+  border-radius: 2px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.button:hover:not(:disabled) {
+  color: var(--charcoal-deep);
+  background: var(--cream);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }
 
 /* Start screen */
@@ -28,94 +101,92 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  min-height: 60vh;
-  padding: 32px;
+  gap: 18px;
+  min-height: 62vh;
+  padding: 40px 24px;
   text-align: center;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 1px solid var(--hairline);
+}
+
+.start__logo {
+  width: 96px;
+  height: 96px;
+  border: 1px solid var(--hairline);
+  border-radius: 50%;
 }
 
 .start__title {
   margin: 0;
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
-  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 500;
+  letter-spacing: 0.03em;
 }
 
 .start__intro {
-  max-width: 46ch;
-  margin: 0;
-  color: var(--text-muted);
-}
-
-/* Purple call-to-action, visible in light and dark modes (CLAUDE.md checklist). */
-.start__button {
-  padding: 0.75rem 1.75rem;
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #fff;
-  background: var(--accent);
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.start__button:hover:not(:disabled) {
-  background: var(--accent-hover);
-}
-
-.start__button:disabled {
-  opacity: 0.7;
-  cursor: progress;
+  max-width: 44ch;
+  margin: 0 0 6px;
+  color: var(--cream-muted);
 }
 
 .start__notice {
   margin: 0;
-  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-style: italic;
+  color: var(--cream-muted);
 }
 
 .start__review {
   margin: 0;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  font-size: 0.8rem;
+  color: var(--stone);
 }
 
 .start__review code {
   padding: 1px 6px;
-  background: var(--panel-raised);
-  border-radius: 4px;
+  color: var(--cream-muted);
+  background: var(--charcoal-deep);
 }
 
 /* Call */
 .call {
-  min-height: 60vh;
+  min-height: 62vh;
   overflow: hidden;
-  border-radius: 12px;
+  border: 1px solid var(--hairline);
 }
 
 /* Listings */
 .listings {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 20px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  align-items: center;
+  gap: 14px;
   min-width: 0;
+  padding: 24px 20px;
+  border: 1px solid var(--hairline);
 }
 
 .listings__heading {
   margin: 0;
-  font-size: 1.25rem;
-  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
 }
 
 .listings__summary,
 .listings__message {
   margin: 0;
-  color: var(--text-muted);
+  text-align: center;
+  color: var(--cream-muted);
+}
+
+.listings__summary strong {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--cream);
 }
 
 .listings__message--error {
@@ -124,8 +195,9 @@
 
 .listings__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 14px;
+  width: 100%;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -136,26 +208,30 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--panel-raised);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  background: var(--charcoal-deep);
+  border: 1px solid var(--hairline);
+  transition: border-color 0.2s ease;
+}
+
+.listing:hover {
+  border-color: var(--hairline-strong);
 }
 
 .listing--pick {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 2px var(--gold);
+  border-color: var(--cream);
+  box-shadow: 0 0 0 1px var(--cream);
 }
 
+/* A cream band above the card image, so it never covers the card's name. */
 .listing__badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  padding: 2px 8px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #1a1206;
-  background: var(--gold);
-  border-radius: 999px;
+  padding: 3px 8px;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  color: var(--charcoal-deep);
+  background: var(--cream);
 }
 
 .listing__image {
@@ -163,92 +239,66 @@
   width: 100%;
   aspect-ratio: 488 / 680;
   object-fit: cover;
-  background: #000;
+  background: var(--charcoal-deep);
 }
 
 .listing__image--missing {
   display: grid;
   place-items: center;
-  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--stone);
 }
 
 .listing__body {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 10px;
+  gap: 3px;
+  padding: 10px 12px 12px;
 }
 
 .listing__title {
   margin: 0;
-  font-size: 0.95rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .listing__type,
 .listing__also {
   margin: 0;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  font-size: 0.75rem;
+  color: var(--stone);
 }
 
 .listing__price {
-  margin: 0;
-  font-weight: 700;
+  margin: 2px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
 }
 
 .listing__link {
   margin-top: 4px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-/* Dev simulator */
-.simulator {
-  padding: 12px 16px;
-  font-size: 0.9rem;
-  background: var(--panel);
-  border: 1px dashed var(--border);
-  border-radius: 12px;
-}
-
-.simulator summary {
-  cursor: pointer;
-  color: var(--text-muted);
-}
-
-.simulator__form {
+/* Footer */
+.colophon {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
-  margin-top: 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 16px 32px;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
 }
 
-.simulator__form label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.simulator__form input,
-.simulator__form select,
-.simulator__form button {
-  padding: 6px 8px;
-  color: var(--text);
-  background: var(--panel-raised);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
-
-.simulator__form button {
-  cursor: pointer;
-}
-
-.simulator__reply pre {
-  max-height: 260px;
-  overflow: auto;
-  padding: 8px;
-  font-size: 0.75rem;
-  background: #0d0b09;
-  border-radius: 6px;
+.colophon__star {
+  font-size: 0.7rem;
+  color: var(--cream-muted);
 }

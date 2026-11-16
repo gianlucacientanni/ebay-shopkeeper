@@ -1,7 +1,8 @@
 # Arcanum Collectibles shopkeeper: frontend
 
 React + Vite + TypeScript app: a Tavus CVI call with Tom (the shopkeeper PAL) beside a
-panel of the eBay listings he finds.
+panel of the eBay listings he finds, styled after the Arcanum store banner
+(`src/assets/banner.webp`, `src/assets/logo.webp`).
 
 ## Run
 
@@ -30,13 +31,16 @@ npm run dev            # http://localhost:5173
 ## Testing without spending minutes
 
 Real calls use avatar minutes; each call is capped by `MAX_CALL_DURATION` (180 s by default).
-Two free ways to test:
+To check starting and leaving a call for free, set `TAVUS_TEST_MODE=true` in `back_end/.env`:
+the conversation is created but Tom doesn't join. The tool-call relay is covered by the unit
+tests (`tests/unit/toolCall.test.ts`).
 
-- In `npm run dev`, open **"Dev: simulate Tom's search_cards call"** under the call. It runs a
-  fake tool call through the same handler, fills the listings panel, and shows the exact
-  `tool_result` Tom would receive with its size against the 4 KB app-message limit.
-- Set `TAVUS_TEST_MODE=true` in `back_end/.env` to check starting and leaving a call: the
-  conversation is created but Tom doesn't join.
+## Production build
+
+```bash
+npm run build
+npm run preview -- --port 5173 --strictPort   # keep 5173: the backend's CORS allows only that origin
+```
 
 ```bash
 npm test         # unit tests (Vitest)

@@ -6,15 +6,17 @@
  */
 import { useCallback, useState } from "react";
 import "./App.css";
+import banner from "./assets/banner.webp";
 import { createConversation, endConversation, BackendError } from "./api/backend";
 import { CVIProvider } from "./components/cvi/components/cvi-provider";
-import { DevToolCallSimulator } from "./components/DevToolCallSimulator";
 import { ListingsPanel } from "./components/ListingsPanel";
 import { ShopkeeperCall } from "./components/ShopkeeperCall";
 import { StartScreen } from "./components/StartScreen";
 import { findMentionedCard } from "./lib/tomsPick";
 import type { ListingsState } from "./types/listings";
 import type { ConversationInfo, SearchRequest, SearchResult } from "./types/search";
+
+const STORE_URL = "https://www.ebay.co.uk/str/arcanumcollectibles";
 
 function App() {
   const [conversation, setConversation] = useState<ConversationInfo | null>(null);
@@ -70,6 +72,9 @@ function App() {
 
   return (
     <CVIProvider>
+      <header className="masthead">
+        <img className="masthead__banner" src={banner} alt="arcanum" />
+      </header>
       <main className="shop">
         <div className="shop__stage">
           {conversation ? (
@@ -89,16 +94,16 @@ function App() {
               lastConversationId={lastConversationId}
             />
           )}
-          {import.meta.env.DEV && (
-            <DevToolCallSimulator
-              onSearchStart={onSearchStart}
-              onListings={onListings}
-              onError={onError}
-            />
-          )}
         </div>
         <ListingsPanel state={listings} tomsPick={tomsPick} />
       </main>
+      <footer className="colophon">
+        <span className="colophon__star" aria-hidden="true">✦</span>
+        <a href={STORE_URL} target="_blank" rel="noopener noreferrer">
+          Visit Arcanum Collectibles on eBay
+        </a>
+        <span className="colophon__star" aria-hidden="true">✦</span>
+      </footer>
     </CVIProvider>
   );
 }

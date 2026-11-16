@@ -103,6 +103,17 @@ class ShopkeeperTest(TestCase):
             self.assertIn("single best card", recommend["objective_prompt"])
             self.assertEqual(recommend["next_required_objective"], "wrap_up")
 
+    def test_problem_branches_fallbacks(self):
+        by_name = {objective["objective_name"]: objective for objective in OBJECTIVES}
+        for branch in PROBLEM_BRANCHES:
+            name = branch["objective_name"]
+            self.assertIn(branch["fallback_role"], ROLE_FILTERS, f"Test case {name} failed.")
+            self.assertNotEqual(branch["fallback_role"], branch["role"], f"Test case {name} failed.")
+            prompt = by_name[name]["objective_prompt"]
+            self.assertIn(f'role "{branch["fallback_role"]}"', prompt, f"Test case {name} failed.")
+            self.assertIn("search once more", prompt, f"Test case {name} failed.")
+        self.assertIn("search once more", by_name[FALLBACK_OBJECTIVE]["objective_prompt"])
+
     def test_problem_branches_examples(self):
         test_cases = [
             {"description": "deck too slow", "branch": "recommend_ramp", "role": "ramp"},
@@ -112,6 +123,8 @@ class ShopkeeperTest(TestCase):
                 "role": "protection",
             },
         ]
+        fallbacks = {branch["objective_name"]: branch["fallback_role"] for branch in PROBLEM_BRANCHES}
+        self.assertEqual(fallbacks["recommend_interaction"], "removal")
         roles = {branch["objective_name"]: branch["role"] for branch in PROBLEM_BRANCHES}
         for test_case in test_cases:
             test_desc = test_case["description"]
@@ -144,6 +157,8 @@ class ShopkeeperTest(TestCase):
         self.assertLess(len(SYSTEM_PROMPT), PROMPT_CHAR_BUDGET)
         self.assertIn(TOOL_NAME, SYSTEM_PROMPT)
         self.assertIn("single best card", SYSTEM_PROMPT)
+        self.assertIn("search once more", SYSTEM_PROMPT)
+        self.assertIn("Never search more than twice", SYSTEM_PROMPT)
 
 
 if __name__ == "__main__":
